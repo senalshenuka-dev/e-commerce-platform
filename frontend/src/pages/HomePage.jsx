@@ -4,7 +4,7 @@ import { useProductStore } from "../stores/useProductStore";
 import FeaturedProducts from "../components/FeaturedProducts";
 
 const HomePage = () => {
-	const { fetchFeaturedProducts, products, isLoading, categories, fetchCategories } = useProductStore();
+	const { fetchFeaturedProducts, products, loading, categories, fetchCategories } = useProductStore();
 
 	useEffect(() => {
 		fetchFeaturedProducts();
@@ -31,7 +31,7 @@ const HomePage = () => {
 					)}
 				</div>
 
-				{!isLoading && products.length > 0 && <FeaturedProducts featuredProducts={products} />}
+				{!loading && products.length > 0 && <FeaturedProducts featuredProducts={products} />}
 			</div>
 		</div>
 	);

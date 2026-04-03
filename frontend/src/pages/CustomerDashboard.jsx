@@ -1,45 +1,24 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Ticket, RefreshCcw, PlusCircle, MessageSquare, Clock, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Ticket, RefreshCcw, PlusCircle, MessageSquare, Clock, CheckCircle, AlertCircle, ChevronDown, ChevronUp, Package, ShoppingBag, Truck } from "lucide-react";
 import { useSupportStore } from "../stores/useSupportStore";
-import NewTicketModal from "../components/NewTicketModal";
+import { useOrderStore } from "../stores/useOrderStore";
+import ReturnRequestModal from "../components/ReturnRequestModal";
+import { TICKET_STATUS, TICKET_PRIORITY, ORDER_STATUS, RETURN_STATUS, DASHBOARD_TABS, APP_CURRENCY } from "../lib/constants";
 
 const CustomerDashboard = () => {
-	const { myTickets, myReturns, fetchMyTickets, fetchMyReturns, fetchTicketMessages, messages, replyToTicket, loading } = useSupportStore();
-	const [activeTab, setActiveTab] = useState("tickets");
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [expandedTicketId, setExpandedTicketId] = useState(null);
-	const [replyText, setReplyText] = useState("");
+	const { myReturns, fetchMyReturns, loading: supportLoading } = useSupportStore();
+	const { orders, fetchMyOrders, loading: orderLoading } = useOrderStore();
+	const [activeTab, setActiveTab] = useState(DASHBOARD_TABS.ORDERS);
+	const [expandedOrderId, setExpandedOrderId] = useState(null);
+	const [selectedOrder, setSelectedOrder] = useState(null);
+	const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
 
 	useEffect(() => {
-		fetchMyTickets();
 		fetchMyReturns();
-	}, [fetchMyTickets, fetchMyReturns]);
+		fetchMyOrders();
+	}, [fetchMyReturns, fetchMyOrders]);
 
-	const toggleTicket = (ticketId) => {
-		if (expandedTicketId === ticketId) {
-			setExpandedTicketId(null);
-		} else {
-			setExpandedTicketId(ticketId);
-			fetchTicketMessages(ticketId);
-		}
-	};
-
-	const handleReply = async (e, ticketId) => {
-		e.preventDefault();
-		if (!replyText.trim()) return;
-		await replyToTicket(ticketId, replyText);
-		setReplyText("");
-	};
-
-	const getStatusIcon = (status) => {
-		switch (status) {
-			case "Open": return <AlertCircle size={18} className='text-red-400' />;
-			case "In Progress": return <Clock size={18} className='text-yellow-400' />;
-			case "Resolved": return <CheckCircle size={18} className='text-green-400' />;
-			default: return null;
-		}
-	};
 
 	return (
 		<div className='min-h-screen bg-gray-900 text-white pb-12'>
@@ -50,35 +29,25 @@ const CustomerDashboard = () => {
 						initial={{ opacity: 0, x: -20 }}
 						animate={{ opacity: 1, x: 0 }}
 					>
-						Help Desk & Returns
+						Customer Dashboard
 					</motion.h1>
-					<motion.button
-						onClick={() => setIsModalOpen(true)}
-						className='flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-primary-900/20 active:scale-95'
-						initial={{ opacity: 0, scale: 0.9 }}
-						animate={{ opacity: 1, scale: 1 }}
-						whileHover={{ scale: 1.05 }}
-					>
-						<PlusCircle size={20} />
-						New Ticket
-					</motion.button>
 				</div>
 
 				{/* Tabs */}
 				<div className='flex gap-4 mb-8 bg-gray-800/50 p-1.5 rounded-2xl w-fit border border-gray-700'>
 					<button
-						onClick={() => setActiveTab("tickets")}
+						onClick={() => setActiveTab(DASHBOARD_TABS.ORDERS)}
 						className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all ${
-							activeTab === "tickets" ? "bg-primary-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
+							activeTab === DASHBOARD_TABS.ORDERS ? "bg-primary-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
 						}`}
 					>
-						<Ticket size={18} />
-						Help Desk
+						<Package size={18} />
+						My Orders
 					</button>
 					<button
-						onClick={() => setActiveTab("returns")}
+						onClick={() => setActiveTab(DASHBOARD_TABS.RETURNS)}
 						className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all ${
-							activeTab === "returns" ? "bg-primary-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
+							activeTab === DASHBOARD_TABS.RETURNS ? "bg-primary-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
 						}`}
 					>
 						<RefreshCcw size={18} />
@@ -88,87 +57,126 @@ const CustomerDashboard = () => {
 
 				{/* Content */}
 				<AnimatePresence mode='wait'>
-					{activeTab === "tickets" ? (
+					{activeTab === DASHBOARD_TABS.ORDERS ? (
 						<motion.div
-							key='tickets'
+							key='orders'
 							initial={{ opacity: 0, y: 10 }}
 							animate={{ opacity: 1, y: 0 }}
 							exit={{ opacity: 0, y: -10 }}
-							className='space-y-4'
+							className='space-y-6'
 						>
-							{myTickets?.length > 0 ? (
-								myTickets.map((ticket) => (
-									<div 
-										key={ticket._id} 
-										className='bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden transition-all hover:border-gray-600'
-									>
-										<button 
-											onClick={() => toggleTicket(ticket._id)}
-											className='w-full p-5 flex items-center justify-between text-left hover:bg-gray-700/30'
-										>
+							{orders?.length > 0 ? (
+								orders.map((order) => (
+									<div key={order._id} className='bg-gray-800 rounded-3xl border border-gray-700 overflow-hidden shadow-xl'>
+										<div className='p-6 flex flex-wrap items-center justify-between gap-4 border-b border-gray-700/50'>
 											<div className='flex items-center gap-4'>
-												{getStatusIcon(ticket.status)}
+												<div className='bg-primary-500/10 p-3 rounded-2xl'>
+													<ShoppingBag className='text-primary-400' size={24} />
+												</div>
 												<div>
-													<h3 className='font-semibold text-white'>{ticket.subject}</h3>
-													<p className='text-xs text-gray-500 mt-0.5'>Updated: {new Date(ticket.updatedAt).toLocaleDateString()}</p>
+													<h3 className='font-bold text-lg'>Order #{order._id.slice(-8).toUpperCase()}</h3>
+													<p className='text-sm text-gray-400'>{new Date(order.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}</p>
 												</div>
 											</div>
-											<div className='flex items-center gap-4'>
-												<span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-													ticket.priority === "Urgent" ? "bg-red-500/20 text-red-400" :
-													ticket.priority === "High" ? "bg-orange-500/20 text-orange-400" :
-													"bg-gray-700 text-gray-400"
-												}`}>
-													{ticket.priority}
-												</span>
-												{expandedTicketId === ticket._id ? <ChevronUp size={20} className='text-gray-500' /> : <ChevronDown size={20} className='text-gray-500' />}
+											<div className='flex items-center gap-6'>
+												<div className='text-right'>
+													<p className='text-xs text-gray-500 uppercase font-bold tracking-widest mb-1'>Total Amount</p>
+													<p className='text-xl font-black text-primary-400'>{APP_CURRENCY} {order.totalAmount.toFixed(2)}</p>
+												</div>
+												<div className='flex items-center gap-2'>
+													{order.status === ORDER_STATUS.DELIVERED && (
+														<button
+															onClick={(e) => {
+																e.stopPropagation();
+																setSelectedOrder(order);
+																setIsReturnModalOpen(true);
+															}}
+															className='text-[10px] font-bold uppercase tracking-widest bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-2 rounded-xl transition-all'
+														>
+															Request Return
+														</button>
+													)}
+													<button 
+														onClick={() => setExpandedOrderId(expandedOrderId === order._id ? null : order._id)}
+														className='p-2 hover:bg-gray-700 rounded-full transition-colors'
+													>
+														{expandedOrderId === order._id ? <ChevronUp /> : <ChevronDown />}
+													</button>
+												</div>
 											</div>
-										</button>
+										</div>
+
+										{/* Tracking Stepper */}
+										<div className='px-6 py-8 bg-gray-900/20'>
+											<div className='flex items-center justify-between max-w-2xl mx-auto relative'>
+												{/* Line */}
+												<div className='absolute top-1/2 left-0 w-full h-0.5 bg-gray-700 -translate-y-1/2' />
+												<div 
+													className='absolute top-1/2 left-0 h-0.5 bg-primary-500 -translate-y-1/2 transition-all duration-1000 ease-out' 
+													style={{ 
+														width: order.status === ORDER_STATUS.PENDING ? "0%" : 
+															   order.status === ORDER_STATUS.PROCESSING ? "33%" : 
+															   order.status === ORDER_STATUS.SHIPPED ? "66%" : "100%" 
+													}}
+												/>
+
+												{[
+													{ id: ORDER_STATUS.PENDING, label: "Ordered", icon: Clock },
+													{ id: ORDER_STATUS.PROCESSING, label: "Processing", icon: Package },
+													{ id: ORDER_STATUS.SHIPPED, label: "Shipped", icon: Truck },
+													{ id: ORDER_STATUS.DELIVERED, label: "Delivered", icon: CheckCircle }
+												].map((step, index) => {
+													const statuses = [ORDER_STATUS.PENDING, ORDER_STATUS.PROCESSING, ORDER_STATUS.SHIPPED, ORDER_STATUS.DELIVERED];
+													const currentIndex = statuses.indexOf(order.status);
+													const isCompleted = index < currentIndex || (order.status === ORDER_STATUS.DELIVERED && index === 3);
+													const isActive = order.status === step.id;
+
+													return (
+														<div key={step.id} className='relative z-10 flex flex-col items-center gap-3'>
+															<div className={`p-2.5 rounded-full transition-all duration-500 ${
+																isCompleted || isActive ? "bg-primary-600 text-white scale-110 shadow-lg shadow-primary-500/20" : "bg-gray-800 text-gray-500"
+															}`}>
+																<step.icon size={18} />
+															</div>
+															<span className={`text-[10px] font-bold uppercase tracking-widest ${
+																isActive ? "text-primary-400" : "text-gray-500"
+															}`}>
+																{step.label}
+															</span>
+														</div>
+													);
+												})}
+											</div>
+										</div>
 
 										<AnimatePresence>
-											{expandedTicketId === ticket._id && (
+											{expandedOrderId === order._id && (
 												<motion.div
 													initial={{ height: 0 }}
 													animate={{ height: "auto" }}
 													exit={{ height: 0 }}
-													className='overflow-hidden'
+													className='overflow-hidden border-t border-gray-700/50'
 												>
-													<div className='p-6 pt-0 border-t border-gray-700/50 bg-gray-900/20'>
-														<div className='mb-6 p-4 bg-gray-800/40 rounded-xl text-sm text-gray-300 leading-relaxed italic'>
-															"{ticket.description}"
-														</div>
-														
-														<div className='space-y-4 mb-6'>
-															{messages.map((msg) => (
-																<div key={msg._id} className={`flex ${msg.isAdmin ? "justify-start" : "justify-end"}`}>
-																	<div className={`max-w-[85%] p-3.5 rounded-2xl text-sm ${
-																		msg.isAdmin ? "bg-gray-700 text-gray-200 rounded-tl-none" : "bg-primary-600 text-white rounded-tr-none shadow-md"
-																	}`}>
-																		{msg.content}
-																		<span className='block text-[10px] opacity-60 mt-1.5 text-right'>
-																			{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-																		</span>
+													<div className='p-6 space-y-4'>
+														{order.products.map((item) => (
+															<div key={item._id} className='flex items-center justify-between bg-gray-900/40 p-4 rounded-2xl border border-gray-700/30'>
+																<div className='flex items-center gap-4'>
+																	<img 
+																		src={item.product?.image} 
+																		alt={item.product?.name} 
+																		className='w-16 h-16 object-cover rounded-xl shadow-md'
+																	/>
+																	<div>
+																		<h4 className='font-bold text-gray-200'>{item.product?.name}</h4>
+																		<p className='text-sm text-gray-500'>Quantity: {item.quantity}</p>
 																	</div>
 																</div>
-															))}
-														</div>
-
-														<form onSubmit={(e) => handleReply(e, ticket._id)} className='flex gap-3'>
-															<input 
-																type="text" 
-																value={replyText}
-																onChange={(e) => setReplyText(e.target.value)}
-																placeholder='Wait for a response or add more info...'
-																className='flex-1 bg-gray-900 border border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500'
-															/>
-															<button 
-																type="submit"
-																disabled={!replyText.trim() || loading}
-																className='bg-primary-600 hover:bg-primary-500 text-white p-2.5 rounded-xl disabled:opacity-50 transition-colors'
-															>
-																<MessageSquare size={18} />
-															</button>
-														</form>
+																<div className='text-right'>
+																	<p className='font-bold text-white'>{APP_CURRENCY} {item.price.toFixed(2)}</p>
+																	<p className='text-xs text-gray-500'>Subtotal: {APP_CURRENCY} {(item.price * item.quantity).toFixed(2)}</p>
+																</div>
+															</div>
+														))}
 													</div>
 												</motion.div>
 											)}
@@ -176,10 +184,10 @@ const CustomerDashboard = () => {
 									</div>
 								))
 							) : (
-								<div className='text-center py-20 bg-gray-800/20 rounded-3xl border-2 border-dashed border-gray-700'>
-									<Ticket size={48} className='mx-auto text-gray-600 mb-4 opacity-50' />
-									<h3 className='text-xl font-medium text-gray-400'>No active tickets</h3>
-									<p className='text-gray-500 mt-2'>Have a question? We're here to help.</p>
+								<div className='text-center py-24 bg-gray-800/10 rounded-[3rem] border-4 border-dashed border-gray-800'>
+									<Package size={64} className='mx-auto text-gray-700 mb-6 opacity-30' />
+									<h3 className='text-2xl font-bold text-gray-500'>No orders found</h3>
+									<p className='text-gray-600 mt-3'>Your shopping journey starts here.</p>
 								</div>
 							)}
 						</motion.div>
@@ -207,11 +215,11 @@ const CustomerDashboard = () => {
 													<div className='font-medium text-white'>Order #{req.order?._id?.slice(-6).toUpperCase()}</div>
 													<div className='text-xs text-gray-500 mt-1 italic'>{req.reason}</div>
 												</td>
-												<td className='px-6 py-4 font-semibold text-primary-400'>${req.amount.toFixed(2)}</td>
+												<td className='px-6 py-4 font-semibold text-primary-400'>{APP_CURRENCY} {req.amount.toFixed(2)}</td>
 												<td className='px-6 py-4'>
 													<span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-														req.status === "Approved" ? "bg-green-500/20 text-green-400" :
-														req.status === "Rejected" ? "bg-red-500/20 text-red-400" :
+														req.status === RETURN_STATUS.APPROVED ? "bg-green-500/20 text-green-400" :
+														req.status === RETURN_STATUS.REJECTED ? "bg-red-500/20 text-red-400" :
 														"bg-yellow-500/20 text-yellow-400"
 													}`}>
 														{req.status}
@@ -232,7 +240,11 @@ const CustomerDashboard = () => {
 				</AnimatePresence>
 			</div>
 
-			<NewTicketModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+			<ReturnRequestModal 
+				isOpen={isReturnModalOpen} 
+				onClose={() => setIsReturnModalOpen(false)} 
+				order={selectedOrder}
+			/>
 		</div>
 	);
 };

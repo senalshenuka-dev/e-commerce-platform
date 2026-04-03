@@ -9,6 +9,8 @@ const CreateProductForm = () => {
 		description: "",
 		price: "",
 		category: "",
+		brand: "",
+		stock: "",
 		image: "",
 	});
 
@@ -22,7 +24,7 @@ const CreateProductForm = () => {
 		e.preventDefault();
 		try {
 			await createProduct(newProduct);
-			setNewProduct({ name: "", description: "", price: "", category: "", image: "" });
+			setNewProduct({ name: "", description: "", price: "", category: "", brand: "", stock: "", image: "" });
 		} catch {
 			console.log("error creating a product");
 		}
@@ -101,6 +103,42 @@ const CreateProductForm = () => {
 						 focus:border-primary-500'
 						required
 					/>
+				</div>
+
+				<div className='grid grid-cols-2 gap-4'>
+					<div>
+						<label htmlFor='brand' className='block text-sm font-medium text-gray-300'>
+							Brand
+						</label>
+						<input
+							type='text'
+							id='brand'
+							name='brand'
+							value={newProduct.brand}
+							onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
+							className='mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm 
+							py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-primary-500
+							 focus:border-primary-500'
+							required
+						/>
+					</div>
+
+					<div>
+						<label htmlFor='stock' className='block text-sm font-medium text-gray-300'>
+							Stock
+						</label>
+						<input
+							type='number'
+							id='stock'
+							name='stock'
+							value={newProduct.stock}
+							onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
+							className='mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm 
+							py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-primary-500
+							 focus:border-primary-500'
+							required
+						/>
+					</div>
 				</div>
 
 				<div>

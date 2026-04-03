@@ -23,6 +23,15 @@ const productSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
+		brand: {
+			type: String,
+			required: [true, "Brand is required"],
+		},
+		stock: {
+			type: Number,
+			default: 0,
+			min: 0,
+		},
 		isFeatured: {
 			type: Boolean,
 			default: false,

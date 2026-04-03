@@ -16,6 +16,7 @@ export const useProductStore = create((set) => ({
 				products: [...prevState.products, res.data],
 				loading: false,
 			}));
+			toast.success("Product created successfully");
 		} catch (error) {
 			toast.error(error.response?.data?.error || "Failed to create product");
 			set({ loading: false });
@@ -115,6 +116,39 @@ export const useProductStore = create((set) => ({
 			toast.success("Category deleted successfully");
 		} catch (error) {
 			toast.error(error.response?.data?.error || "Failed to delete category");
+			set({ loading: false });
+		}
+	},
+	browseProducts: async (filters = {}) => {
+		set({ loading: true });
+		try {
+			const queryParams = new URLSearchParams();
+			Object.entries(filters).forEach(([key, value]) => {
+				if (value !== undefined && value !== null && value !== "") {
+					queryParams.append(key, value);
+				}
+			});
+
+			const response = await axios.get(`/products/browse?${queryParams.toString()}`);
+			set({ products: response.data.products || [], loading: false });
+		} catch (error) {
+			set({ loading: false });
+			toast.error(error.response?.data?.error || "Failed to fetch products");
+		}
+	},
+	updateProduct: async (productId, productData) => {
+		set({ loading: true });
+		try {
+			const res = await axios.put(`/products/${productId}`, productData);
+			set((prevState) => ({
+				products: prevState.products.map((product) =>
+					product._id === productId ? res.data : product
+				),
+				loading: false,
+			}));
+			toast.success("Product updated successfully");
+		} catch (error) {
+			toast.error(error.response?.data?.error || "Failed to update product");
 			set({ loading: false });
 		}
 	},

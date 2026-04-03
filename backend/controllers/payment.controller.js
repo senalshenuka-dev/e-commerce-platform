@@ -18,7 +18,7 @@ export const createCheckoutSession = async (req, res) => {
 
 			return {
 				price_data: {
-					currency: "usd",
+					currency: "lkr",
 					product_data: {
 						name: product.name,
 						images: [product.image],
@@ -70,6 +70,96 @@ export const createCheckoutSession = async (req, res) => {
 	} catch (error) {
 		console.error("Error processing checkout:", error);
 		res.status(500).json({ message: "Error processing checkout", error: error.message });
+	}
+};
+
+export const createPaymentIntent = async (req, res) => {
+	try {
+		const { products, couponCode } = req.body;
+
+		if (!Array.isArray(products) || products.length === 0) {
+			return res.status(400).json({ error: "Invalid or empty products array" });
+		}
+
+		let totalAmount = 0;
+		products.forEach((product) => {
+			const amount = Math.round(product.price * 100);
+			totalAmount += amount * (product.quantity || 1);
+		});
+
+		let coupon = null;
+		if (couponCode) {
+			coupon = await Coupon.findOne({ code: couponCode, userId: req.user._id, isActive: true });
+			if (coupon) {
+				totalAmount -= Math.round((totalAmount * coupon.discountPercentage) / 100);
+			}
+		}
+
+		const paymentIntent = await stripe.paymentIntents.create({
+			amount: totalAmount,
+			currency: "lkr",
+			metadata: {
+				userId: req.user._id.toString(),
+				couponCode: couponCode || "",
+			},
+		});
+
+		res.status(200).json({
+			clientSecret: paymentIntent.client_secret,
+			totalAmount: totalAmount / 100,
+		});
+	} catch (error) {
+		console.error("Error creating payment intent:", error);
+		res.status(500).json({ message: "Error creating payment intent", error: error.message });
+	}
+};
+
+export const confirmOrder = async (req, res) => {
+	try {
+		const { paymentIntentId, products, totalAmount, shippingAddress, couponCode } = req.body;
+
+		let isVerified = false;
+
+		if (paymentIntentId.startsWith("mock_")) {
+			// Mock payment is always verified
+			isVerified = true;
+		} else {
+			const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+			if (paymentIntent.status === "succeeded") {
+				isVerified = true;
+			}
+		}
+
+		if (isVerified) {
+			if (couponCode) {
+				await Coupon.findOneAndUpdate({ code: couponCode, userId: req.user._id }, { isActive: false });
+			}
+
+			const newOrder = new Order({
+				user: req.user._id,
+				products: products.map((p) => ({
+					product: p._id,
+					quantity: p.quantity,
+					price: p.price,
+				})),
+				totalAmount,
+				stripeSessionId: paymentIntentId,
+				status: "pending",
+			});
+
+			await newOrder.save();
+
+			res.status(201).json({
+				success: true,
+				message: "Order placed successfully!",
+				orderId: newOrder._id,
+			});
+		} else {
+			res.status(400).json({ message: "Payment not verified" });
+		}
+	} catch (error) {
+		console.error("Error confirming order:", error);
+		res.status(500).json({ message: "Error confirming order", error: error.message });
 	}
 };
 

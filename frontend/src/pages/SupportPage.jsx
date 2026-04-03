@@ -1,27 +1,26 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Ticket, RefreshCcw, MessageSquare, UserCheck } from "lucide-react";
+import { RefreshCcw, UserCheck, Star } from "lucide-react";
 import { useSupportStore } from "../stores/useSupportStore";
 
-import TicketList from "../components/TicketList";
 import ReturnManagement from "../components/ReturnManagement";
 import UsersList from "../components/UsersList";
+import ReviewManagement from "../components/ReviewManagement";
 
 const tabs = [
-	{ id: "help-desk", label: "Help Desk", icon: Ticket },
 	{ id: "returns", label: "Returns & Refunds", icon: RefreshCcw },
 	{ id: "users", label: "User Accounts", icon: UserCheck },
+	{ id: "reviews", label: "Product Reviews", icon: Star },
 ];
 
 const SupportPage = () => {
-	const [activeTab, setActiveTab] = useState("help-desk");
-	const { fetchTickets, fetchReturns, fetchUsers } = useSupportStore();
+	const [activeTab, setActiveTab] = useState("returns");
+	const { fetchReturns, fetchUsers } = useSupportStore();
 
 	useEffect(() => {
-		fetchTickets();
 		fetchReturns();
 		fetchUsers();
-	}, [fetchTickets, fetchReturns, fetchUsers]);
+	}, [fetchReturns, fetchUsers]);
 
 	return (
 		<div className='min-h-screen relative overflow-hidden bg-gray-900 text-white'>
@@ -59,9 +58,9 @@ const SupportPage = () => {
 					exit={{ opacity: 0, x: -20 }}
 					transition={{ duration: 0.4 }}
 				>
-					{activeTab === "help-desk" && <TicketList />}
 					{activeTab === "returns" && <ReturnManagement />}
 					{activeTab === "users" && <UsersList />}
+					{activeTab === "reviews" && <ReviewManagement />}
 				</motion.div>
 			</div>
 		</div>

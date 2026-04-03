@@ -7,6 +7,9 @@ import AdminPage from "./pages/AdminPage";
 import SupportPage from "./pages/SupportPage";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import CategoryPage from "./pages/CategoryPage";
+import BrowsePage from "./pages/BrowsePage";
+import ProductPage from "./pages/ProductPage";
+import WishlistPage from "./pages/WishlistPage";
 
 import Navbar from "./components/Navbar";
 import { Toaster } from "react-hot-toast";
@@ -15,8 +18,9 @@ import { useEffect } from "react";
 import LoadingSpinner from "./components/LoadingSpinner";
 import CartPage from "./pages/CartPage";
 import { useCartStore } from "./stores/useCartStore";
-import PurchaseSuccessPage from "./pages/PurchaseSuccessPage";
 import PurchaseCancelPage from "./pages/PurchaseCancelPage";
+import PurchaseSuccessPage from "./pages/PurchaseSuccessPage";
+import CheckoutPage from "./pages/CheckoutPage";
 
 function App() {
 	const { user, checkAuth, checkingAuth } = useUserStore();
@@ -59,8 +63,12 @@ function App() {
 						}
 					/>
 					<Route path='/help-desk' element={user ? <CustomerDashboard /> : <Navigate to='/login' />} />
+					<Route path='/browse' element={<BrowsePage />} />
 					<Route path='/category/:category' element={<CategoryPage />} />
+					<Route path='/product/:id' element={<ProductPage />} />
+					<Route path='/wishlist' element={user ? <WishlistPage /> : <Navigate to='/login' />} />
 					<Route path='/cart' element={user ? <CartPage /> : <Navigate to='/login' />} />
+					<Route path='/checkout' element={user ? <CheckoutPage /> : <Navigate to='/login' />} />
 					<Route
 						path='/purchase-success'
 						element={user ? <PurchaseSuccessPage /> : <Navigate to='/login' />}

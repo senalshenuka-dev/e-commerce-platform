@@ -58,7 +58,7 @@ const ReturnManagement = () => {
 									</div>
 								</td>
 								<td className='px-6 py-4 font-bold text-primary-400'>
-									${request.amount.toFixed(2)}
+									LKR {request.amount.toFixed(2)}
 								</td>
 								<td className='px-6 py-4'>
 									<span

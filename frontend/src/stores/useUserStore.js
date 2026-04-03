@@ -58,15 +58,15 @@ export const useUserStore = create((set, get) => ({
 
 	refreshToken: async () => {
 		// Prevent multiple simultaneous refresh attempts
-		if (get().checkingAuth) return;
+		if (get().loading) return;
 
-		set({ checkingAuth: true });
+		set({ loading: true });
 		try {
 			const response = await axios.post("/auth/refresh-token");
-			set({ checkingAuth: false });
+			set({ loading: false });
 			return response.data;
 		} catch (error) {
-			set({ user: null, checkingAuth: false });
+			set({ user: null, loading: false });
 			throw error;
 		}
 	},
@@ -84,6 +84,13 @@ axios.interceptors.response.use(
 		if (error.response?.status === 401 && !originalRequest._retry) {
 			originalRequest._retry = true;
 
+			// If it's a refresh token request or auth check failing, don't retry recursively
+			if (originalRequest.url?.includes("/auth/refresh-token") || originalRequest.url?.includes("/auth/profile")) {
+				useUserStore.getState().logout();
+				useUserStore.setState({ checkingAuth: false });
+				return Promise.reject(error);
+			}
+
 			try {
 				// If a refresh is already in progress, wait for it to complete
 				if (refreshPromise) {
@@ -98,8 +105,10 @@ axios.interceptors.response.use(
 
 				return axios(originalRequest);
 			} catch (refreshError) {
+				refreshPromise = null;
 				// If refresh fails, redirect to login or handle as needed
 				useUserStore.getState().logout();
+				useUserStore.setState({ checkingAuth: false });
 				return Promise.reject(refreshError);
 			}
 		}

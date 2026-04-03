@@ -1,4 +1,4 @@
-import { ShoppingCart, UserPlus, LogIn, LogOut, Lock, MessageSquare, LifeBuoy } from "lucide-react";
+import { ShoppingCart, UserPlus, LogIn, LogOut, Lock, MessageSquare, LayoutDashboard, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useUserStore } from "../stores/useUserStore";
 import { useCartStore } from "../stores/useCartStore";
@@ -14,7 +14,7 @@ const Navbar = () => {
 			<div className='container mx-auto px-4 py-3'>
 				<div className='flex flex-wrap justify-between items-center'>
 					<Link to='/' className='text-2xl font-bold text-primary-400 items-center space-x-2 flex'>
-						E-Commerce
+						Online Fashion Store
 					</Link>
 
 					<nav className='flex flex-wrap items-center gap-4'>
@@ -24,6 +24,13 @@ const Navbar = () => {
 					 ease-in-out'
 						>
 							Home
+						</Link>
+						<Link
+							to={"/browse"}
+							className='text-gray-300 hover:text-primary-400 transition duration-300 
+							ease-in-out'
+						>
+							Browse
 						</Link>
 						{user && (
 							<Link
@@ -44,14 +51,25 @@ const Navbar = () => {
 							</Link>
 						)}
 
+						{user && (
+							<Link
+								to={"/wishlist"}
+								className='text-gray-300 hover:text-primary-400 transition duration-300 
+							ease-in-out flex items-center'
+							>
+								<Heart className='inline-block mr-1' size={20} />
+								<span className='hidden sm:inline'>Wishlist</span>
+							</Link>
+						)}
+
 						{user?.role === "customer" && (
 							<Link
 								to={"/help-desk"}
 								className='text-gray-300 hover:text-primary-400 transition duration-300 
 							ease-in-out flex items-center'
 							>
-								<LifeBuoy className='inline-block mr-1' size={20} />
-								<span className='hidden sm:inline'>Help Desk</span>
+								<LayoutDashboard className='inline-block mr-1' size={20} />
+								<span className='hidden sm:inline'>My Dashboard</span>
 							</Link>
 						)}
 						{user?.role === "support" && (

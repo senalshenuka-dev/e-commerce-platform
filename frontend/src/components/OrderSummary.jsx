@@ -1,16 +1,12 @@
 import { motion } from "framer-motion";
 import { useCartStore } from "../stores/useCartStore";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MoveRight } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
 import axios from "../lib/axios";
-
-const stripePromise = loadStripe(
-	"pk_test_51KZYccCoOZF2UhtOwdXQl3vcizup20zqKqT9hVUIsVzsdBrhqbUI2fE0ZdEVLdZfeHjeyFXtqaNsyCJCmZWnjNZa00PzMAjlcL"
-);
 
 const OrderSummary = () => {
 	const { total, subtotal, coupon, isCouponApplied, cart } = useCartStore();
+	const navigate = useNavigate();
 
 	const savings = subtotal - total;
 	const formattedSubtotal = subtotal.toFixed(2);
@@ -18,20 +14,7 @@ const OrderSummary = () => {
 	const formattedSavings = savings.toFixed(2);
 
 	const handlePayment = async () => {
-		const stripe = await stripePromise;
-		const res = await axios.post("/payments/create-checkout-session", {
-			products: cart,
-			couponCode: coupon ? coupon.code : null,
-		});
-
-		const session = res.data;
-		const result = await stripe.redirectToCheckout({
-			sessionId: session.id,
-		});
-
-		if (result.error) {
-			console.error("Error:", result.error);
-		}
+		navigate("/checkout");
 	};
 
 	return (
@@ -47,13 +30,13 @@ const OrderSummary = () => {
 				<div className='space-y-2'>
 					<dl className='flex items-center justify-between gap-4'>
 						<dt className='text-base font-normal text-gray-300'>Original price</dt>
-						<dd className='text-base font-medium text-white'>${formattedSubtotal}</dd>
+						<dd className='text-base font-medium text-white'>LKR {formattedSubtotal}</dd>
 					</dl>
 
 					{savings > 0 && (
 						<dl className='flex items-center justify-between gap-4'>
 							<dt className='text-base font-normal text-gray-300'>Savings</dt>
-							<dd className='text-base font-medium text-primary-400'>-${formattedSavings}</dd>
+							<dd className='text-base font-medium text-primary-400'>-LKR {formattedSavings}</dd>
 						</dl>
 					)}
 
@@ -65,7 +48,7 @@ const OrderSummary = () => {
 					)}
 					<dl className='flex items-center justify-between gap-4 border-t border-gray-600 pt-2'>
 						<dt className='text-base font-bold text-white'>Total</dt>
-						<dd className='text-base font-bold text-primary-400'>${formattedTotal}</dd>
+						<dd className='text-base font-bold text-primary-400'>LKR {formattedTotal}</dd>
 					</dl>
 				</div>
 

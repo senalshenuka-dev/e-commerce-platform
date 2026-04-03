@@ -2,12 +2,13 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, AlertCircle, HelpCircle } from "lucide-react";
 import { useSupportStore } from "../stores/useSupportStore";
+import { TICKET_PRIORITY } from "../lib/constants";
 
 const NewTicketModal = ({ isOpen, onClose }) => {
 	const [ticketData, setTicketData] = useState({
 		subject: "",
 		description: "",
-		priority: "Medium",
+		priority: TICKET_PRIORITY.MEDIUM,
 	});
 	const { createTicket, loading } = useSupportStore();
 
@@ -15,7 +16,7 @@ const NewTicketModal = ({ isOpen, onClose }) => {
 		e.preventDefault();
 		const success = await createTicket(ticketData);
 		if (success) {
-			setTicketData({ subject: "", description: "", priority: "Medium" });
+			setTicketData({ subject: "", description: "", priority: TICKET_PRIORITY.MEDIUM });
 			onClose();
 		}
 	};
@@ -68,7 +69,7 @@ const NewTicketModal = ({ isOpen, onClose }) => {
 							</div>
 
 							<div className='grid grid-cols-3 gap-3'>
-								{["Low", "Medium", "High"].map((p) => (
+								{[TICKET_PRIORITY.LOW, TICKET_PRIORITY.MEDIUM, TICKET_PRIORITY.HIGH].map((p) => (
 									<button
 										key={p}
 										type='button'

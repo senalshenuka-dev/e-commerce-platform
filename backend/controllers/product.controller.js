@@ -43,7 +43,7 @@ export const getFeaturedProducts = async (req, res) => {
 
 export const createProduct = async (req, res) => {
 	try {
-		const { name, description, price, image, category } = req.body;
+		const { name, description, price, image, category, brand, stock } = req.body;
 
 		let imageUrl = "https://placehold.co/600x400?text=Product+Image";
 		
@@ -93,6 +93,8 @@ export const createProduct = async (req, res) => {
 			price,
 			image: imageUrl,
 			category,
+			brand,
+			stock: stock || 0,
 		});
 
 		res.status(201).json(product);
@@ -180,6 +182,44 @@ export const getProductsByCategory = async (req, res) => {
 	}
 };
 
+export const browseProducts = async (req, res) => {
+	try {
+		const { search, minPrice, maxPrice, category, brand, inStock } = req.query;
+		let query = {};
+
+		if (search) {
+			query.$or = [
+				{ name: { $regex: search, $options: "i" } },
+				{ description: { $regex: search, $options: "i" } },
+			];
+		}
+
+		if (minPrice || maxPrice) {
+			query.price = {};
+			if (minPrice) query.price.$gte = Number(minPrice);
+			if (maxPrice) query.price.$lte = Number(maxPrice);
+		}
+
+		if (category) {
+			query.category = category;
+		}
+
+		if (brand) {
+			query.brand = brand;
+		}
+
+		if (inStock === "true") {
+			query.stock = { $gt: 0 };
+		}
+
+		const products = await Product.find(query).sort({ createdAt: -1 });
+		res.json({ products });
+	} catch (error) {
+		console.log("Error in browseProducts controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
+
 export const toggleFeaturedProduct = async (req, res) => {
 	try {
 		const product = await Product.findById(req.params.id);
@@ -207,3 +247,34 @@ async function updateFeaturedProductsCache() {
 		console.log("error in update cache function");
 	}
 }
+
+export const updateProduct = async (req, res) => {
+	try {
+		const { name, description, price, category, brand, stock } = req.body;
+		const product = await Product.findById(req.params.id);
+
+		if (!product) {
+			return res.status(404).json({ message: "Product not found" });
+		}
+
+		// Update fields if provided
+		if (name !== undefined) product.name = name;
+		if (description !== undefined) product.description = description;
+		if (price !== undefined) product.price = price;
+		if (category !== undefined) product.category = category;
+		if (brand !== undefined) product.brand = brand;
+		if (stock !== undefined) product.stock = stock;
+
+		const updatedProduct = await product.save();
+
+		// If the product was featured, we need to update the cache
+		if (updatedProduct.isFeatured) {
+			await updateFeaturedProductsCache();
+		}
+
+		res.json(updatedProduct);
+	} catch (error) {
+		console.log("Error in updateProduct controller", error.message);
+		res.status(500).json({ message: "Server error", error: error.message });
+	}
+};
